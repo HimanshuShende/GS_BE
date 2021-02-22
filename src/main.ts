@@ -55,7 +55,6 @@ APP.post("/send_mail/", (req, res)=>{
                 return true
             }
             else{
-                console.log(str, false)
                 return descr.error("any.custom", {
                     error: new Error("it's not one of the following: to/cc/bcc") 
                 })
@@ -103,8 +102,6 @@ APP.post("/send_mail/", (req, res)=>{
             }
         });
     }
-    console.log(setEmailArray_failure);
-    console.log(setEmailArray_success);
     // initiates a mailchimp response variable
     let mailchimp_response: any;
     const send_mail = async () =>{
@@ -121,7 +118,6 @@ APP.post("/send_mail/", (req, res)=>{
     }
     // resolves the send_mail Promise
     send_mail().then((mail_resp)=>{
-        console.log("Mail Resp : ", mail_resp)
         // takes the mailchimp_response returned by the promise after executing, then converts it into an array
         // loops over this array and seperates and put them in the failureArray if status is 'rejected'/'invalid', otherwise in successArray
         Array.from(mail_resp).forEach(async (elem: any)=> {

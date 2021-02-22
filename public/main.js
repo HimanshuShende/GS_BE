@@ -89,7 +89,6 @@ APP.post("/send_mail/", function (req, res) {
                 return true;
             }
             else {
-                console.log(str, false);
                 return descr.error("any.custom", {
                     error: new Error("it's not one of the following: to/cc/bcc")
                 });
@@ -134,8 +133,6 @@ APP.post("/send_mail/", function (req, res) {
             }
         });
     }
-    console.log(setEmailArray_failure);
-    console.log(setEmailArray_success);
     // initiates a mailchimp response variable
     var mailchimp_response;
     var send_mail = function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -157,7 +154,6 @@ APP.post("/send_mail/", function (req, res) {
     }); };
     // resolves the send_mail Promise
     send_mail().then(function (mail_resp) {
-        console.log("Mail Resp : ", mail_resp);
         // takes the mailchimp_response returned by the promise after executing, then converts it into an array
         // loops over this array and seperates and put them in the failureArray if status is 'rejected'/'invalid', otherwise in successArray
         Array.from(mail_resp).forEach(function (elem) { return __awaiter(void 0, void 0, void 0, function () {
