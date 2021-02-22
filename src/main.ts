@@ -20,7 +20,18 @@ APP.use(express.urlencoded({
 }));
 
 APP.get("/", (req, res)=>{
-    res.send(`<h1 style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;">GlobalShala Backend Task</h1>`)
+    res.send(
+        `<style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        </style>
+        <h1 style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;">
+            GlobalShala Backend Task
+        </h1>`
+        )
 })
 
 APP.post("/send_mail/", (req, res)=>{

@@ -63,7 +63,7 @@ APP.use(express_1.default.urlencoded({
     extended: true
 }));
 APP.get("/", function (req, res) {
-    res.send("<h1 style=\"width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;\">GlobalShala Backend Task</h1>");
+    res.send("<style>\n        *{\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        </style>\n        <h1 style=\"width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;\">\n            GlobalShala Backend Task\n        </h1>");
 });
 APP.post("/send_mail/", function (req, res) {
     failureArray = [];
