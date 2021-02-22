@@ -6,12 +6,13 @@ const APP = express();
 // fetches PORT variable from environment, if not present than selects 8080
 const PORT = process.env.PORT || 8080
 // creates our mailchimp client instance with the API key which is also fetched from environment variables
-const apiKey = process.env.API_KEY;
+const apiKey = process.env.API_KEY || 'fSTbY9Q5pNCqykcitjBqzw';
 const mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 // array which holds the failed and successfully sent mails
 let failureArray: any[];
 let successArray: any[];
-let setEmailArray: string[];
+let setEmailArray_success: any[];
+let setEmailArray_failure: any[];
 interface User {
     email: string,
     name: string,
@@ -42,7 +43,8 @@ APP.post("/send_mail/", (req, res)=>{
     // initialting the arrays as empty at the start
     failureArray  = [];
     successArray  = [];
-    setEmailArray = [];
+    setEmailArray_success = [];
+    setEmailArray_failure = [];
     // a Joi object schema used for validating each user data
     // following tells that each user data must contain defined key-value pair along with the limits
     const userObject = Joi.object({
@@ -79,22 +81,30 @@ APP.post("/send_mail/", (req, res)=>{
         req.body.userData.forEach((user:any, index:any)=>{
             const userObjectResult = userObject.validate(user)
             if (userObjectResult.error) {
-                // if the user is invalid than puts it in the failureArray along with the error associated with it and return it as a part of response
-                failureArray.push({
-                    ...user,
-                    error: userObjectResult.error.details[0].message 
-                })
+                // for preventing duplication of the userData with same email address
+                if (!setEmailArray_failure.includes((user.email,user.type))){
+                    // if the user is invalid than puts it in the failureArray along with the error associated with it and return it as a part of response
+                    failureArray.push({
+                        ...user,
+                        error: userObjectResult.error.details[0].message 
+                    })
+                    // adds to the array if not present in it, otherwise doesn't
+                    setEmailArray_failure.push((user.email,user.type))
+                }
             }else{
                 // for preventing duplication of the userData with same email address
-                if (!setEmailArray.includes(user.emial)){
+                if (!setEmailArray_success.includes((user.email,user.type))){
                     // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
                     success.push(user)
                     // adds to the array if not present in it, otherwise doesn't
-                    setEmailArray.push(user.email)
+                    setEmailArray_success.push((user.email,user.type))
+
                 }
             }
         });
     }
+    console.log(setEmailArray_failure);
+    console.log(setEmailArray_success);
     // initiates a mailchimp response variable
     let mailchimp_response: any;
     const send_mail = async () =>{
@@ -111,6 +121,7 @@ APP.post("/send_mail/", (req, res)=>{
     }
     // resolves the send_mail Promise
     send_mail().then((mail_resp)=>{
+        console.log("Mail Resp : ", mail_resp)
         // takes the mailchimp_response returned by the promise after executing, then converts it into an array
         // loops over this array and seperates and put them in the failureArray if status is 'rejected'/'invalid', otherwise in successArray
         Array.from(mail_resp).forEach(async (elem: any)=> {
@@ -120,7 +131,7 @@ APP.post("/send_mail/", (req, res)=>{
         // send the response
         res.status(200).jsonp({
             status: 200,
-            message: `${successArray.length} Sent, ${failureArray} failed.`,
+            message: `${successArray.length} Sent, ${failureArray.length} failed.`,
             data: {
                 success: successArray,
                 failure: failureArray

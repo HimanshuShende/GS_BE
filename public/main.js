@@ -57,12 +57,13 @@ var APP = express_1.default();
 // fetches PORT variable from environment, if not present than selects 8080
 var PORT = process.env.PORT || 8080;
 // creates our mailchimp client instance with the API key which is also fetched from environment variables
-var apiKey = process.env.API_KEY;
+var apiKey = process.env.API_KEY || 'fSTbY9Q5pNCqykcitjBqzw';
 var mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 // array which holds the failed and successfully sent mails
 var failureArray;
 var successArray;
-var setEmailArray;
+var setEmailArray_success;
+var setEmailArray_failure;
 APP.use(express_1.default.json());
 APP.use(express_1.default.urlencoded({
     extended: true
@@ -76,7 +77,8 @@ APP.post("/send_mail/", function (req, res) {
     // initialting the arrays as empty at the start
     failureArray = [];
     successArray = [];
-    setEmailArray = [];
+    setEmailArray_success = [];
+    setEmailArray_failure = [];
     // a Joi object schema used for validating each user data
     // following tells that each user data must contain defined key-value pair along with the limits
     var userObject = joi_1.default.object({
@@ -113,20 +115,27 @@ APP.post("/send_mail/", function (req, res) {
         req.body.userData.forEach(function (user, index) {
             var userObjectResult = userObject.validate(user);
             if (userObjectResult.error) {
-                // if the user is invalid than puts it in the failureArray along with the error associated with it and return it as a part of response
-                failureArray.push(__assign(__assign({}, user), { error: userObjectResult.error.details[0].message }));
+                // for preventing duplication of the userData with same email address
+                if (!setEmailArray_failure.includes((user.email, user.type))) {
+                    // if the user is invalid than puts it in the failureArray along with the error associated with it and return it as a part of response
+                    failureArray.push(__assign(__assign({}, user), { error: userObjectResult.error.details[0].message }));
+                    // adds to the array if not present in it, otherwise doesn't
+                    setEmailArray_failure.push((user.email, user.type));
+                }
             }
             else {
                 // for preventing duplication of the userData with same email address
-                if (!setEmailArray.includes(user.emial)) {
+                if (!setEmailArray_success.includes((user.email, user.type))) {
                     // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
                     success.push(user);
                     // adds to the array if not present in it, otherwise doesn't
-                    setEmailArray.push(user.email);
+                    setEmailArray_success.push((user.email, user.type));
                 }
             }
         });
     }
+    console.log(setEmailArray_failure);
+    console.log(setEmailArray_success);
     // initiates a mailchimp response variable
     var mailchimp_response;
     var send_mail = function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -148,6 +157,7 @@ APP.post("/send_mail/", function (req, res) {
     }); };
     // resolves the send_mail Promise
     send_mail().then(function (mail_resp) {
+        console.log("Mail Resp : ", mail_resp);
         // takes the mailchimp_response returned by the promise after executing, then converts it into an array
         // loops over this array and seperates and put them in the failureArray if status is 'rejected'/'invalid', otherwise in successArray
         Array.from(mail_resp).forEach(function (elem) { return __awaiter(void 0, void 0, void 0, function () {
@@ -162,7 +172,7 @@ APP.post("/send_mail/", function (req, res) {
         // send the response
         res.status(200).jsonp({
             status: 200,
-            message: successArray.length + " Sent, " + failureArray + " failed.",
+            message: successArray.length + " Sent, " + failureArray.length + " failed.",
             data: {
                 success: successArray,
                 failure: failureArray
