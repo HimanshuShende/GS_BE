@@ -11,8 +11,9 @@ const mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 // array which holds the failed and successfully sent mails
 let failureArray: any[];
 let successArray: any[];
-let setEmailArray_success: any[];
-let setEmailArray_failure: any[];
+let setEmailArray_success: string[];
+let setEmailArray_failure: string[];
+const from_email = process.env.FROM_EMAIL;
 interface User {
     email: string,
     name: string,
@@ -81,22 +82,22 @@ APP.post("/send_mail/", (req, res)=>{
             const userObjectResult = userObject.validate(user)
             if (userObjectResult.error) {
                 // for preventing duplication of the userData with same email address
-                if (!setEmailArray_failure.includes((user.email,user.type))){
+                if (!setEmailArray_failure.includes(user.email)){
                     // if the user is invalid than puts it in the failureArray along with the error associated with it and return it as a part of response
                     failureArray.push({
                         ...user,
                         error: userObjectResult.error.details[0].message 
                     })
                     // adds to the array if not present in it, otherwise doesn't
-                    setEmailArray_failure.push((user.email,user.type))
+                    setEmailArray_failure.push(user.email)
                 }
             }else{
                 // for preventing duplication of the userData with same email address
-                if (!setEmailArray_success.includes((user.email,user.type))){
+                if (!setEmailArray_success.includes(user.email)){
                     // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
                     success.push(user)
                     // adds to the array if not present in it, otherwise doesn't
-                    setEmailArray_success.push((user.email,user.type))
+                    setEmailArray_success.push(user.email)
 
                 }
             }
@@ -109,9 +110,9 @@ APP.post("/send_mail/", (req, res)=>{
         mailchimp_response = await mailchimp.messages.send({
             message: {
                 "html": req.body.emailMessage,
+                "from_email": from_email,
                 "to": success,
                 "auto_text": true,
-        
             }
         })
         return mailchimp_response

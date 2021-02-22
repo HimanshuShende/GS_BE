@@ -64,6 +64,7 @@ var failureArray;
 var successArray;
 var setEmailArray_success;
 var setEmailArray_failure;
+var from_email = process.env.FROM_EMAIL;
 APP.use(express_1.default.json());
 APP.use(express_1.default.urlencoded({
     extended: true
@@ -115,20 +116,20 @@ APP.post("/send_mail/", function (req, res) {
             var userObjectResult = userObject.validate(user);
             if (userObjectResult.error) {
                 // for preventing duplication of the userData with same email address
-                if (!setEmailArray_failure.includes((user.email, user.type))) {
+                if (!setEmailArray_failure.includes(user.email)) {
                     // if the user is invalid than puts it in the failureArray along with the error associated with it and return it as a part of response
                     failureArray.push(__assign(__assign({}, user), { error: userObjectResult.error.details[0].message }));
                     // adds to the array if not present in it, otherwise doesn't
-                    setEmailArray_failure.push((user.email, user.type));
+                    setEmailArray_failure.push(user.email);
                 }
             }
             else {
                 // for preventing duplication of the userData with same email address
-                if (!setEmailArray_success.includes((user.email, user.type))) {
+                if (!setEmailArray_success.includes(user.email)) {
                     // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
                     success.push(user);
                     // adds to the array if not present in it, otherwise doesn't
-                    setEmailArray_success.push((user.email, user.type));
+                    setEmailArray_success.push(user.email);
                 }
             }
         });
@@ -141,6 +142,7 @@ APP.post("/send_mail/", function (req, res) {
                 case 0: return [4 /*yield*/, mailchimp.messages.send({
                         message: {
                             "html": req.body.emailMessage,
+                            "from_email": from_email,
                             "to": success,
                             "auto_text": true,
                         }
