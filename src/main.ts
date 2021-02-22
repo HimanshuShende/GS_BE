@@ -5,9 +5,10 @@ import Joi from "joi";
 const APP = express();
 // fetches PORT variable from environment, if not present than selects 8080
 const PORT = process.env.PORT || 8080
-// creates our mailchimp client instance with the API key
+// creates our mailchimp client instance with the API key which is also fetched from environment variables
 const apiKey = process.env.API_KEY;
 const mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
+// array which holds the failed and successfully sent mails
 let failureArray: any[];
 let successArray: any[];
 interface User {
@@ -20,7 +21,7 @@ APP.use(express.json())
 APP.use(express.urlencoded({
     extended: true
 }));
-
+// handles the get method
 APP.get("/", (req, res)=>{
     res.send(
         `<style>
@@ -35,15 +36,17 @@ APP.get("/", (req, res)=>{
         </h1>`
         )
 })
-
+// handles the post method 
 APP.post("/send_mail/", (req, res)=>{
+    // initialting both the arrays as empty at the start
     failureArray = [];
     successArray = [];
-
+    // a Joi object schema used for validating each user data
+    // following tells that each user data must contain defined key-value pair along with the limits
     const userObject = Joi.object({
-        email: Joi.string().required(),
-        name: Joi.string(),
-        type: Joi.custom((str, descr)=>{
+        email: Joi.string().required(), // string, required
+        name: Joi.string(), // optional 
+        type: Joi.custom((str, descr)=>{ // custom Joi validator which checks wheter the type key holds the values "to"/"cc"/"bcc", , required
             if (['to', 'cc', 'bcc'].includes(str)){
                 return true
             }
@@ -53,36 +56,42 @@ APP.post("/send_mail/", (req, res)=>{
                     error: new Error("it's not one of the following: to/cc/bcc") 
                 })
             }
-        })
+        }).required()
     })
-
+    // a Joi object schema which validates the incoming request body
     const reqSchema = Joi.object({
-        userData: Joi.array().min(1).required(),
-        emailMessage: Joi.string().required(),
-        attachments: Joi.array()
+        userData: Joi.array().min(1).required(), // an array which must contain atleast one user data, requires
+        emailMessage: Joi.string().required(), // message to be sent, required
+        attachments: Joi.array() // attachments, optional
     })
 
+    // holds the User typed Object which are validated below
     const success: User[] = [];
-
+    // checks the request body for the validation using joi object(reqSchema) defined above
     const reqSchemaResult = reqSchema.validate(req.body)
     if (reqSchemaResult.error){
+        // returns the error messages if the request body is invalid
         res.send(reqSchemaResult.error.details[0].message);
     }else{
+        // lopps over each user data and validates them using Joi Object(userObject) defined above
         req.body.userData.forEach((user:any, index:any)=>{
             const userObjectResult = userObject.validate(user)
             if (userObjectResult.error) {
+                // if the user is invalid than puts it in the failureArray along with the error associated with it and return it as a part of response
                 failureArray.push({
                     ...user,
                     error: userObjectResult.error.details[0].message 
                 })
             }else{
+                // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
                 success.push(user)
             }
         });
     }
-
+    // initiates a mailchimp response variable
     let mailchimp_response: any;
-    const run = async () =>{
+    const send_mail = async () =>{
+        // holds the response sent back by the mailchimp, which is an array of user data in the format {"email": "", "status": "", "_id": "", "rejected_reason": "if status is 'rejected'"}
         mailchimp_response = await mailchimp.messages.send({
             message: {
                 "html": req.body.emailMessage,
@@ -93,11 +102,15 @@ APP.post("/send_mail/", (req, res)=>{
         })
         return mailchimp_response
     }
-    run().then((mail_resp)=>{
+    // resolves the send_mail Promise
+    send_mail().then((mail_resp)=>{
+        // takes the mailchimp_response returned by the promise after executing, then converts it into an array
+        // loops over this array and seperates and put them in the failureArray if status is 'rejected'/'invalid', otherwise in successArray
         Array.from(mail_resp).forEach(async (elem: any)=> {
-            if (elem.status === "rejected" || elem.status === "rejected")failureArray.unshift(elem)
+            if (elem.status === "rejected" || elem.status === "rejected") failureArray.unshift(elem)
             else successArray.push(elem)
         })
+        // send the response
         res.status(200).jsonp({
             status: 200,
             message: "Email Sent",
@@ -107,8 +120,8 @@ APP.post("/send_mail/", (req, res)=>{
             }
         })
     });
-
-    run().catch((reason)=>{
+    // executes this block the promise is rejected, and sends the following response
+    send_mail().catch((reason)=>{
         res.jsonp({
             status: "Unexpected error occured",
             message: reason,
@@ -119,6 +132,7 @@ APP.post("/send_mail/", (req, res)=>{
     })
 })
 
+// listens to the PORT given for the requests
 APP.listen(PORT, ()=>{
     console.log("Listening to port ", PORT, "...")
 })
