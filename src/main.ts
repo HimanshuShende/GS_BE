@@ -31,7 +31,7 @@ APP.get("/", (req, res)=>{
         }
         </style>
         <h1 style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;">
-            GlobalShala Backend Task (${apiKey})
+            GlobalShala Backend Task
         </h1>`
         )
 })
