@@ -11,6 +11,7 @@ const mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 // array which holds the failed and successfully sent mails
 let failureArray: any[];
 let successArray: any[];
+let setEmailArray: string[];
 interface User {
     email: string,
     name: string,
@@ -38,9 +39,10 @@ APP.get("/", (req, res)=>{
 })
 // handles the post method 
 APP.post("/send_mail/", (req, res)=>{
-    // initialting both the arrays as empty at the start
-    failureArray = [];
-    successArray = [];
+    // initialting the arrays as empty at the start
+    failureArray  = [];
+    successArray  = [];
+    setEmailArray = [];
     // a Joi object schema used for validating each user data
     // following tells that each user data must contain defined key-value pair along with the limits
     const userObject = Joi.object({
@@ -83,8 +85,13 @@ APP.post("/send_mail/", (req, res)=>{
                     error: userObjectResult.error.details[0].message 
                 })
             }else{
-                // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
-                success.push(user)
+                // for preventing duplication of the userData with same email address
+                if (!setEmailArray.includes(user.emial)){
+                    // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
+                    success.push(user)
+                    // adds to the array if not present in it, otherwise doesn't
+                    setEmailArray.push(user.email)
+                }
             }
         });
     }
@@ -113,7 +120,7 @@ APP.post("/send_mail/", (req, res)=>{
         // send the response
         res.status(200).jsonp({
             status: 200,
-            message: "Email Sent",
+            message: `${successArray.length} Sent, ${failureArray} failed.`,
             data: {
                 success: successArray,
                 failure: failureArray

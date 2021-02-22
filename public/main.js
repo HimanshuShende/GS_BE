@@ -62,6 +62,7 @@ var mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 // array which holds the failed and successfully sent mails
 var failureArray;
 var successArray;
+var setEmailArray;
 APP.use(express_1.default.json());
 APP.use(express_1.default.urlencoded({
     extended: true
@@ -72,9 +73,10 @@ APP.get("/", function (req, res) {
 });
 // handles the post method 
 APP.post("/send_mail/", function (req, res) {
-    // initialting both the arrays as empty at the start
+    // initialting the arrays as empty at the start
     failureArray = [];
     successArray = [];
+    setEmailArray = [];
     // a Joi object schema used for validating each user data
     // following tells that each user data must contain defined key-value pair along with the limits
     var userObject = joi_1.default.object({
@@ -115,8 +117,13 @@ APP.post("/send_mail/", function (req, res) {
                 failureArray.push(__assign(__assign({}, user), { error: userObjectResult.error.details[0].message }));
             }
             else {
-                // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
-                success.push(user);
+                // for preventing duplication of the userData with same email address
+                if (!setEmailArray.includes(user.emial)) {
+                    // if the user is valid than puts it in the success which will be sent to the mailer service(mailchimp)
+                    success.push(user);
+                    // adds to the array if not present in it, otherwise doesn't
+                    setEmailArray.push(user.email);
+                }
             }
         });
     }
@@ -155,7 +162,7 @@ APP.post("/send_mail/", function (req, res) {
         // send the response
         res.status(200).jsonp({
             status: 200,
-            message: "Email Sent",
+            message: successArray.length + " Sent, " + failureArray + " failed.",
             data: {
                 success: successArray,
                 failure: failureArray
