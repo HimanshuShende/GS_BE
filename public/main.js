@@ -52,9 +52,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = __importDefault(require("express"));
 var joi_1 = __importDefault(require("joi"));
+// creates express instance which handles the requests
 var APP = express_1.default();
+// fetches PORT variable from environment, if not present than selects 8080
 var PORT = process.env.PORT || 8080;
-var apiKey = "fSTbY9Q5pNCqykcitjBqzw";
+// creates our mailchimp client instance with the API key
+var apiKey = process.env.API_KEY;
 var mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 var failureArray;
 var successArray;
@@ -63,7 +66,7 @@ APP.use(express_1.default.urlencoded({
     extended: true
 }));
 APP.get("/", function (req, res) {
-    res.send("<style>\n        *{\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        </style>\n        <h1 style=\"width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;\">\n            GlobalShala Backend Task\n        </h1>");
+    res.send("<style>\n        *{\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n        </style>\n        <h1 style=\"width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;\">\n            GlobalShala Backend Task (" + apiKey + ")\n        </h1>");
 });
 APP.post("/send_mail/", function (req, res) {
     failureArray = [];

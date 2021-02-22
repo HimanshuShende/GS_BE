@@ -1,10 +1,12 @@
 import express from "express";
 import Joi from "joi";
 
-
+// creates express instance which handles the requests
 const APP = express();
+// fetches PORT variable from environment, if not present than selects 8080
 const PORT = process.env.PORT || 8080
-const apiKey:string = "fSTbY9Q5pNCqykcitjBqzw";
+// creates our mailchimp client instance with the API key
+const apiKey = process.env.API_KEY;
 const mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 let failureArray: any[];
 let successArray: any[];
@@ -29,7 +31,7 @@ APP.get("/", (req, res)=>{
         }
         </style>
         <h1 style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;font-size: 3rem;font-weight: 700;">
-            GlobalShala Backend Task
+            GlobalShala Backend Task (${apiKey})
         </h1>`
         )
 })
