@@ -14,17 +14,13 @@ interface User {
     type: "to"|"cc"|"bcc"
 }
 
-
-
-
 APP.use(express.json())
 APP.use(express.urlencoded({
     extended: true
 }));
 
-
 APP.get("/", (req, res)=>{
-    res.send("This is task")
+    res.send(`GlobalShala Backend Task running at port ${PORT}`)
 })
 
 APP.post("/send_mail/", (req, res)=>{
@@ -36,7 +32,6 @@ APP.post("/send_mail/", (req, res)=>{
         name: Joi.string(),
         type: Joi.custom((str, descr)=>{
             if (['to', 'cc', 'bcc'].includes(str)){
-                console.log(str, true)
                 return true
             }
             else{
@@ -53,7 +48,7 @@ APP.post("/send_mail/", (req, res)=>{
         emailMessage: Joi.string().required(),
         attachments: Joi.array()
     })
-    
+
     const success: User[] = [];
 
     const reqSchemaResult = reqSchema.validate(req.body)
@@ -86,7 +81,6 @@ APP.post("/send_mail/", (req, res)=>{
         return mailchimp_response
     }
     run().then((mail_resp)=>{
-        console.log("Resolve : ", mail_resp)
         Array.from(mail_resp).forEach(async (elem: any)=> {
             if (elem.status === "rejected" || elem.status === "rejected")failureArray.unshift(elem)
             else successArray.push(elem)
@@ -102,7 +96,6 @@ APP.post("/send_mail/", (req, res)=>{
     });
 
     run().catch((reason)=>{
-        console.log("Reason : ", reason)
         res.jsonp({
             status: "Unexpected error occured",
             message: reason,

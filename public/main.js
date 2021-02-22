@@ -63,7 +63,7 @@ APP.use(express_1.default.urlencoded({
     extended: true
 }));
 APP.get("/", function (req, res) {
-    res.send("This is task");
+    res.send("GlobalShala Backend Task running at port " + PORT);
 });
 APP.post("/send_mail/", function (req, res) {
     failureArray = [];
@@ -73,7 +73,6 @@ APP.post("/send_mail/", function (req, res) {
         name: joi_1.default.string(),
         type: joi_1.default.custom(function (str, descr) {
             if (['to', 'cc', 'bcc'].includes(str)) {
-                console.log(str, true);
                 return true;
             }
             else {
@@ -123,7 +122,6 @@ APP.post("/send_mail/", function (req, res) {
         });
     }); };
     run().then(function (mail_resp) {
-        console.log("Resolve : ", mail_resp);
         Array.from(mail_resp).forEach(function (elem) { return __awaiter(void 0, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 if (elem.status === "rejected" || elem.status === "rejected")
@@ -143,7 +141,6 @@ APP.post("/send_mail/", function (req, res) {
         });
     });
     run().catch(function (reason) {
-        console.log("Reason : ", reason);
         res.jsonp({
             status: "Unexpected error occured",
             message: reason,
