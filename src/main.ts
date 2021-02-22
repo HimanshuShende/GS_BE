@@ -6,7 +6,7 @@ const APP = express();
 // fetches PORT variable from environment, if not present than selects 8080
 const PORT = process.env.PORT || 8080
 // creates our mailchimp client instance with the API key which is also fetched from environment variables
-const apiKey = process.env.API_KEY || 'fSTbY9Q5pNCqykcitjBqzw';
+const apiKey = process.env.API_KEY;
 const mailchimp = require("@mailchimp/mailchimp_transactional")(apiKey);
 // array which holds the failed and successfully sent mails
 let failureArray: any[];
